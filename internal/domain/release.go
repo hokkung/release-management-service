@@ -27,3 +27,7 @@ type ReleasePlan struct {
 	RepositoryID           uuid.UUID
 	Status                 string
 }
+
+func (e *ReleasePlan) TableName() string {
+	return "rms.release_plans"
+}

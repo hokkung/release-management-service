@@ -1,6 +1,8 @@
 package domain
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type GroupItem struct {
 	UIDModel
@@ -10,4 +12,8 @@ type GroupItem struct {
 	CommitMesssage string
 	GroupID        *uuid.UUID
 	ReleasePlanID  uuid.UUID
+}
+
+func (e *GroupItem) TableName() string {
+	return "rms.group_items"
 }
