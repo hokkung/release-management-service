@@ -14,8 +14,12 @@ type GitHubService interface {
 
 type GroupItemService interface {
 	Create(ctx context.Context, req *CreateGroupItemRequest) (*domain.GroupItem, error)
+	Creates(ctx context.Context, ents []*domain.GroupItem) error
+	CreatesIfNotExist(ctx context.Context, req *CreateIfNotExistRequest) ([]*domain.GroupItem, error)
 }
 
 type ReleasePlanService interface {
 	Create(ctx context.Context, req *CreateReleasePlanRequest) (*domain.ReleasePlan, error)
+	Update(ctx context.Context, ent *domain.ReleasePlan) error
+	FindOngoingReleasePlans(ctx context.Context, req *FindOngoingReleasePlansRequest) (*FindOngoingReleasePlansResponse, error)
 }

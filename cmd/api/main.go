@@ -20,10 +20,15 @@ func main() {
 		panic(err)
 	}
 
-	githubClient := github.NewClient(nil).WithAuthToken("<>")
+	githubClient := github.NewClient(nil).WithAuthToken("")
 	githubService := githuby.New(githubClient)
 	reporepo := repopostgres.NewRepository(db)
-	repoService := service.NewRepository(reporepo, githubService)
+
+	groupRepository := repopostgres.NewGroupItem(db)
+	groupItemService := service.NewGroupItem(groupRepository)
+	releasePlanRepository := repopostgres.NewReleasePlan(db)
+	releasePlanService := service.NewReleasePlan(releasePlanRepository)
+	repoService := service.NewRepository(reporepo, githubService, groupItemService, releasePlanService)
 	// err = repoService.Register(ctx, &service.RegisterRequest{
 	// 	Name: "go-groceries",
 	// })
@@ -36,8 +41,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	
 
 	customizer := router.NewCustomizer(*cfg)
 	server := srv.New(customizer)

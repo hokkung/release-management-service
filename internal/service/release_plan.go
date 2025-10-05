@@ -23,7 +23,7 @@ type CreateReleasePlanRequest struct {
 	LatestMainBranchCommit string
 }
 
-func (s *ReleasePlan) Create(ctx context.Context, req *CreateReleasePlanRequest) error {
+func (s *ReleasePlan) Create(ctx context.Context, req *CreateReleasePlanRequest) (*domain.ReleasePlan, error) {
 	ent := &domain.ReleasePlan{
 		UIDModel: domain.UIDModel{
 			ID: uuid.New(),
@@ -37,5 +37,29 @@ func (s *ReleasePlan) Create(ctx context.Context, req *CreateReleasePlanRequest)
 	if err != nil {
 		panic(err)
 	}
-	return nil
+	return ent, nil
+}
+
+type FindOngoingReleasePlansRequest struct {
+	LatestMainBranchCommit string
+}
+
+type FindOngoingReleasePlansResponse struct {
+	Entities []domain.ReleasePlan
+}
+
+func (s *ReleasePlan) FindOngoingReleasePlans(ctx context.Context, req *FindOngoingReleasePlansRequest) (*FindOngoingReleasePlansResponse, error) {
+	ents, err := s.repository.FindByNotInStatus(ctx, []string{
+		string(domain.WaitingToDeployReleasePlanStatus),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &FindOngoingReleasePlansResponse{
+		Entities: ents,
+	}, nil
+}
+
+func (s *ReleasePlan) Update(ctx context.Context, ent *domain.ReleasePlan) error {
+	return s.repository.Save(ctx, ent)
 }

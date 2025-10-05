@@ -15,9 +15,16 @@ func New(cfg config.Configuration) (*gorm.DB, error) {
 	}
 
 	// TODO: move to migrator
-	err = db.AutoMigrate(&domain.Repository{})
-	if err != nil {
-		return nil, err
+	ents := []interface{}{
+		&domain.Repository{},
+		&domain.ReleasePlan{},
+		&domain.GroupItem{},
+	}
+	for _, ent := range ents {
+		err = db.AutoMigrate(ent)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return db, err

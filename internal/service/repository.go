@@ -99,29 +99,69 @@ func (s *Repository) Sync(ctx context.Context, req *SyncRequest) error {
 		return err
 	}
 	if !resp.IsDiff {
+		fmt.Println("repository is up-to-date")
 		return nil
 	}
-	releasePlan, err := s.releasePlanService.Create(ctx, &CreateReleasePlanRequest{
+	releasePlan, err := s.createOrUpdateReleasePlan(ctx, ent, resp)
+	if err != nil {
+		return err
+	}
+
+	var commitsToBeCreated []*CreateGroupItemRequest
+	for _, commit := range resp.Commits {
+		// if merge strategy is "Create a merge commit"
+		// skipping merge request commit created by Github
+		if len(commit.Parents) > 1 {
+			continue
+		}
+		fmt.Printf("commit: %+v \n", *commit.Commit.Message)
+		commitsToBeCreated = append(commitsToBeCreated, &CreateGroupItemRequest{
+			CommitSHA:      *commit.SHA,
+			CommitAuthor:   *commit.Commit.Author.Email,
+			CommitMesssage: *commit.Commit.Message,
+			ReleasePlanID:  releasePlan.ID,
+		})
+	}
+	groupItems, err := s.groupItemService.CreatesIfNotExist(ctx, &CreateIfNotExistRequest{
+		Items: commitsToBeCreated,
+	})
+	fmt.Printf("groupItems: %+v \n", groupItems)
+
+	return nil
+}
+
+func (s *Repository) createOrUpdateReleasePlan(
+	ctx context.Context,
+	ent *domain.Repository,
+	resp *githuby.GetLatestCommitByBranchResponse,
+) (*domain.ReleasePlan, error) {
+	ongoingReleasePlans, err := s.releasePlanService.FindOngoingReleasePlans(ctx, &FindOngoingReleasePlansRequest{
+		LatestMainBranchCommit: resp.HeadSHA,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(ongoingReleasePlans.Entities) > 0 {
+		ongoingReleasePlan := ongoingReleasePlans.Entities[0]
+		if ongoingReleasePlan.LatestMainBranchCommit != resp.HeadSHA {
+			ongoingReleasePlan.LatestMainBranchCommit = resp.HeadSHA
+			err := s.releasePlanService.Update(ctx, &ongoingReleasePlan)
+			if err != nil {
+				return nil, err
+			}
+			return &ongoingReleasePlan, nil
+		}
+		return &ongoingReleasePlan, nil
+	}
+
+	newReleasePlan, err := s.releasePlanService.Create(ctx, &CreateReleasePlanRequest{
 		RepositoryID:           ent.ID,
 		LatestTagCommit:        *resp.LatestTag.Commit.SHA,
 		LatestMainBranchCommit: resp.HeadSHA,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	var groupItems []*domain.GroupItem
-	for _, commit := range resp.Commits {
-		groupItem, err := s.groupItemService.Create(ctx, &CreateGroupItemRequest{
-			CommitSHA:      *commit.Commit.SHA,
-			CommitAuthor:   *commit.Commit.Author.Login,
-			CommitMesssage: *commit.Commit.Message,
-			ReleasePlanID:  releasePlan.ID,
-		})
-		if err != nil {
-			return err
-		}
-		groupItems = append(groupItems, groupItem)
-	}
-
-	return nil
+	return newReleasePlan, nil
 }
