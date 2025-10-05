@@ -1,17 +1,29 @@
 package domain
 
 import (
-	"time"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
 
-type Release struct {
+type ReleasePlanStatus string
+
+var (
+	WaitingToDeployReleasePlanStatus ReleasePlanStatus = "WAITING_TO_DEPLOY"
+	TestingReleasePlanStatus         ReleasePlanStatus = "TESTING"
+	FailReleasePlanStatus            ReleasePlanStatus = "FAIL"
+	UatReleasePlanStatus             ReleasePlanStatus = "UAT"
+)
+
+type ReleasePlan struct {
 	UIDModel
 
-	Name         string
-	TargetDate   time.Time
-	Note         *string
-	RepositoryID uuid.UUID
-	Status       string
+	fromCommit             string
+	toCommit               string
+	targetDeployDate       sql.NullTime
+	Note                   sql.NullString
+	LatestTagCommit        string
+	LatestMainBranchCommit string
+	RepositoryID           uuid.UUID
+	Status                 string
 }

@@ -1,13 +1,24 @@
 package domain
 
-import "github.com/google/uuid"
+import (
+	"database/sql"
+
+	"github.com/google/uuid"
+)
+
+type RepositoryStatus string
+
+var RegisteredRepositoryStatus RepositoryStatus = "REGISTERED"
 
 type Repository struct {
 	UIDModel
 
-	Name      string
-	Url       string
-	ServiceID uuid.UUID
+	Owner          string
+	Name           string
+	Url            string
+	MainBranchName string
+	Status         string
+	LatestSyncAt   sql.NullTime
 }
 
 func (e *Repository) TableName() string {
