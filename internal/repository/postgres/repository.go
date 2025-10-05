@@ -2,13 +2,13 @@ package repopostgres
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hokkung/release-management-service/internal/domain"
 	"gorm.io/gorm"
 )
 
 type GormKey string
-
 const GormContext GormKey = "gormContext"
 
 type Repository struct {
@@ -36,4 +36,26 @@ func (r *Repository) getDB(ctx context.Context) *gorm.DB {
 		return r.db
 	}
 	return tx
+}
+
+func (r *Repository) FindByKey(ctx context.Context, key interface{}) (*domain.Repository, bool, error) {
+	ent, err := gorm.G[domain.Repository](r.db).Where("id = ?", key).First(ctx)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	return &ent, true, nil
+}
+
+func (r *Repository) FindByName(ctx context.Context, name string) (*domain.Repository, bool, error) {
+	ent, err := gorm.G[domain.Repository](r.db).Where("name = ?", name).First(ctx)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	return &ent, true, nil
 }
