@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/gofiber/swagger"
 	"github.com/hokkung/release-management-service/config"
 	server "github.com/hokkung/release-management-service/pkg/srv"
 )
@@ -20,5 +21,5 @@ func NewCustomizer(
 }
 
 func (c *Customizer) Register(srv *server.Server) {
-
+	srv.App.Get("/swagger/*", swagger.HandlerDefault)
 }

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/google/uuid"
@@ -30,4 +31,16 @@ type ReleasePlan struct {
 
 func (e *ReleasePlan) TableName() string {
 	return "rms.release_plans"
+}
+
+type ReleasePlanFilter struct {
+	RepositoryIDs []uuid.UUID
+}
+
+type ReleasePlanRepository interface {
+	Create(ctx context.Context, ent *ReleasePlan) error
+	Save(ctx context.Context, ent *ReleasePlan) error
+	FindByLatestMainBranchCommitAndNotInStatus(ctx context.Context, latestMainBranchCommit string, statuses []string) ([]ReleasePlan, error)
+	FindByNotInStatus(ctx context.Context, statuses []string) ([]ReleasePlan, error)
+	FindByFilter(ctx context.Context, filter *ReleasePlanFilter) ([]ReleasePlan, error)
 }

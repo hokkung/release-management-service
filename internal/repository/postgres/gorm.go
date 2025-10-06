@@ -19,6 +19,7 @@ func New(cfg config.Configuration) (*gorm.DB, error) {
 		&domain.Repository{},
 		&domain.ReleasePlan{},
 		&domain.GroupItem{},
+		&domain.Group{},
 	}
 	for _, ent := range ents {
 		err = db.AutoMigrate(ent)

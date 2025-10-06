@@ -1,4 +1,4 @@
-package service
+package release_plan
 
 import (
 	"context"
@@ -8,19 +8,13 @@ import (
 )
 
 type ReleasePlan struct {
-	repository ReleasePlanRepository
+	repository domain.ReleasePlanRepository
 }
 
-func NewReleasePlan(repository ReleasePlanRepository) *ReleasePlan {
+func NewReleasePlan(repository domain.ReleasePlanRepository) *ReleasePlan {
 	return &ReleasePlan{
 		repository: repository,
 	}
-}
-
-type CreateReleasePlanRequest struct {
-	RepositoryID           uuid.UUID
-	LatestTagCommit        string
-	LatestMainBranchCommit string
 }
 
 func (s *ReleasePlan) Create(ctx context.Context, req *CreateReleasePlanRequest) (*domain.ReleasePlan, error) {
@@ -40,14 +34,6 @@ func (s *ReleasePlan) Create(ctx context.Context, req *CreateReleasePlanRequest)
 	return ent, nil
 }
 
-type FindOngoingReleasePlansRequest struct {
-	LatestMainBranchCommit string
-}
-
-type FindOngoingReleasePlansResponse struct {
-	Entities []domain.ReleasePlan
-}
-
 func (s *ReleasePlan) FindOngoingReleasePlans(ctx context.Context, req *FindOngoingReleasePlansRequest) (*FindOngoingReleasePlansResponse, error) {
 	ents, err := s.repository.FindByNotInStatus(ctx, []string{
 		string(domain.WaitingToDeployReleasePlanStatus),
@@ -62,4 +48,16 @@ func (s *ReleasePlan) FindOngoingReleasePlans(ctx context.Context, req *FindOngo
 
 func (s *ReleasePlan) Update(ctx context.Context, ent *domain.ReleasePlan) error {
 	return s.repository.Save(ctx, ent)
+}
+
+func (s *ReleasePlan) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
+	ents, err := s.repository.FindByFilter(ctx, &domain.ReleasePlanFilter{
+		RepositoryIDs: req.RepositoryIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &ListResponse{
+		Entities: ents,
+	}, nil
 }

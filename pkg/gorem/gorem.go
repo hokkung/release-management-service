@@ -3,6 +3,7 @@ package gorem
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -69,4 +70,32 @@ func (r *BaseRepository[T]) FindByName(ctx context.Context, name string) (*T, bo
 
 func (r *BaseRepository[T]) Save(ctx context.Context, ent *T) error {
 	return r.GetDB(ctx).Save(ent).Error
+}
+
+func (r *BaseRepository[T]) DeleteByID(ctx context.Context, key interface{}) error {
+	resp, err := gorm.G[T](r.GetDB(ctx)).Where("id = ?", key).Delete(ctx)
+	if err != nil {
+		return nil
+	}
+	if resp != 1 {
+		return fmt.Errorf("unable to delete by id: %+v", key)
+	}
+	return nil
+}
+
+func (r *BaseRepository[T]) Delete(ctx context.Context, ent *T) error {
+	resp := r.GetDB(ctx).Delete(ent)
+	return resp.Error
+}
+
+func (r *BaseRepository[T]) FindByFilter(ctx context.Context, filters map[string]any) ([]T, error) {
+	query := r.GetDB(ctx).Model(new(T))
+	var ents []T
+	for field, value := range filters {
+		query = query.Where(field+" IN ?", value)
+	}
+	if err := query.Find(&ents).Error; err != nil {
+		return nil, err
+	}
+	return ents, nil
 }
