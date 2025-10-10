@@ -1,27 +1,21 @@
-package service
+package group_item
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/hokkung/release-management-service/internal/domain"
 )
 
 type GroupItem struct {
-	groupItemRepository GroupItemRepository
+	groupItemRepository domain.GroupItemRepository
 }
 
-func NewGroupItem(groupItemRepository GroupItemRepository) *GroupItem {
+func NewGroupItem(groupItemRepository domain.GroupItemRepository) *GroupItem {
 	return &GroupItem{
 		groupItemRepository: groupItemRepository,
 	}
-}
-
-type CreateGroupItemRequest struct {
-	CommitSHA      string
-	CommitAuthor   string
-	CommitMesssage string
-	ReleasePlanID  uuid.UUID
 }
 
 func (s *GroupItem) Create(ctx context.Context, req *CreateGroupItemRequest) (*domain.GroupItem, error) {
@@ -39,10 +33,6 @@ func (s *GroupItem) Create(ctx context.Context, req *CreateGroupItemRequest) (*d
 		panic(err)
 	}
 	return ent, nil
-}
-
-type CreateIfNotExistRequest struct {
-	Items []*CreateGroupItemRequest
 }
 
 func (s *GroupItem) CreatesIfNotExist(ctx context.Context, req *CreateIfNotExistRequest) ([]*domain.GroupItem, error) {
@@ -79,4 +69,38 @@ func (s *GroupItem) CreatesIfNotExist(ctx context.Context, req *CreateIfNotExist
 
 func (s *GroupItem) Creates(ctx context.Context, ents []*domain.GroupItem) error {
 	return s.groupItemRepository.Creates(ctx, ents)
+}
+
+func (s *GroupItem) Move(ctx context.Context, req *MoveRequest) error {
+	ent, exist, err := s.groupItemRepository.FindByKey(ctx, req.GroupItemID)
+	if err != nil {
+		return err
+	}
+	if !exist {
+		return fmt.Errorf("entity not found")
+	}
+	if req.FromGroupID.String() != ent.GroupID.String() {
+		return fmt.Errorf("group id is invalid")
+	}
+	ent.GroupID = &req.ToGroupID
+	err = s.groupItemRepository.Save(ctx, ent)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *GroupItem) UnassignByGroupID(ctx context.Context, groupID uuid.UUID) error {
+	ents, err := s.groupItemRepository.FindByGroupID(ctx, groupID)
+	if err != nil {
+		return err
+	}
+	for _, ent := range ents {
+		ent.GroupID = nil
+		err = s.groupItemRepository.Save(ctx, &ent)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -27,3 +27,11 @@ func (r *ReleasePlan) FindByNotInStatus(ctx context.Context, statuses []string) 
 	ents, err := gorm.G[domain.ReleasePlan](r.GetDB(ctx)).Where("status NOT IN ?", statuses).Find(ctx)
 	return ents, err
 }
+
+func (r *ReleasePlan) FindByFilter(ctx context.Context, filter *domain.ReleasePlanFilter) ([]domain.ReleasePlan, error) {
+	filters := make(map[string]any)
+	if len(filter.RepositoryIDs) > 0 {
+		filters["repository"] = filter.RepositoryIDs
+	}
+	return r.BaseRepository.FindByFilter(ctx, filters)
+}

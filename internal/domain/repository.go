@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/google/uuid"
@@ -8,7 +9,10 @@ import (
 
 type RepositoryStatus string
 
-var RegisteredRepositoryStatus RepositoryStatus = "REGISTERED"
+const (
+	RegisteredRepositoryStatus RepositoryStatus = "REGISTERED"
+	ActiveRepositoryStatus     RepositoryStatus = "ACTIVE"
+)
 
 type Repository struct {
 	UIDModel
@@ -31,4 +35,12 @@ func NewRepository() *Repository {
 			ID: uuid.New(),
 		},
 	}
+}
+
+type RepositoryRepository interface {
+	Create(ctx context.Context, ent *Repository) error
+	FindByKey(ctx context.Context, key interface{}) (*Repository, bool, error)
+	FindByName(ctx context.Context, name string) (*Repository, bool, error)
+	FindActive(ctx context.Context) ([]Repository, error)
+	Save(ctx context.Context, ent *Repository) error
 }

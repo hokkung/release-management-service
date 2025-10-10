@@ -1,4 +1,4 @@
-package service
+package repository
 
 import (
 	"context"
@@ -6,18 +6,20 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hokkung/release-management-service/internal/domain"
+	"github.com/hokkung/release-management-service/internal/service/group_item"
+	"github.com/hokkung/release-management-service/internal/service/release_plan"
 	"github.com/hokkung/release-management-service/pkg/githuby"
 )
 
 type Repository struct {
-	repository         RepositoryRepository
+	repository         domain.RepositoryRepository
 	groupItemService   GroupItemService
 	githubService      GitHubService
 	releasePlanService ReleasePlanService
 }
 
 func NewRepository(
-	repository RepositoryRepository,
+	repository domain.RepositoryRepository,
 	githubService GitHubService,
 	groupItemService GroupItemService,
 	releasePlanService ReleasePlanService,
@@ -28,12 +30,6 @@ func NewRepository(
 		groupItemService:   groupItemService,
 		releasePlanService: releasePlanService,
 	}
-}
-
-type CreateRequest struct {
-	Name  string
-	Url   string
-	Owner string
 }
 
 func (s *Repository) Create(ctx context.Context, req *CreateRequest) error {
@@ -54,13 +50,9 @@ func (s *Repository) Create(ctx context.Context, req *CreateRequest) error {
 	return nil
 }
 
-type RegisterRequest struct {
-	Name string
-}
-
 func (s *Repository) Register(ctx context.Context, req *RegisterRequest) error {
 	resp, err := s.githubService.GetByRepositoryName(ctx, &githuby.GetByRepositoryNameRequest{
-		Owner: "hokkung",
+		Owner: req.Owner,
 		Name:  req.Name,
 	})
 	if err != nil {
@@ -70,16 +62,12 @@ func (s *Repository) Register(ctx context.Context, req *RegisterRequest) error {
 	err = s.Create(ctx, &CreateRequest{
 		Name:  *resp.Repository.Name,
 		Url:   *resp.Repository.URL,
-		Owner: "hokkung",
+		Owner: *resp.Repository.Owner.Login,
 	})
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-type SyncRequest struct {
-	RepositoryName string
 }
 
 func (s *Repository) Sync(ctx context.Context, req *SyncRequest) error {
@@ -107,26 +95,28 @@ func (s *Repository) Sync(ctx context.Context, req *SyncRequest) error {
 		return err
 	}
 
-	var commitsToBeCreated []*CreateGroupItemRequest
+	var commitsToBeCreated []*group_item.CreateGroupItemRequest
 	for _, commit := range resp.Commits {
 		// if merge strategy is "Create a merge commit"
 		// skipping merge request commit created by Github
-		if len(commit.Parents) > 1 {
+		if NoParentSyncCommitType == req.SyncCommitType && len(commit.Parents) > 1 {
 			continue
 		}
-		fmt.Printf("commit: %+v \n", *commit.Commit.Message)
-		commitsToBeCreated = append(commitsToBeCreated, &CreateGroupItemRequest{
+		commitsToBeCreated = append(commitsToBeCreated, &group_item.CreateGroupItemRequest{
 			CommitSHA:      *commit.SHA,
 			CommitAuthor:   *commit.Commit.Author.Email,
 			CommitMesssage: *commit.Commit.Message,
 			ReleasePlanID:  releasePlan.ID,
 		})
 	}
-	groupItems, err := s.groupItemService.CreatesIfNotExist(ctx, &CreateIfNotExistRequest{
+	_, err = s.groupItemService.CreatesIfNotExist(ctx, &group_item.CreateIfNotExistRequest{
 		Items: commitsToBeCreated,
 	})
-	fmt.Printf("groupItems: %+v \n", groupItems)
-
+	ent.Status = string(domain.ActiveRepositoryStatus)
+	err = s.repository.Save(ctx, ent)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -135,7 +125,7 @@ func (s *Repository) createOrUpdateReleasePlan(
 	ent *domain.Repository,
 	resp *githuby.GetLatestCommitByBranchResponse,
 ) (*domain.ReleasePlan, error) {
-	ongoingReleasePlans, err := s.releasePlanService.FindOngoingReleasePlans(ctx, &FindOngoingReleasePlansRequest{
+	ongoingReleasePlans, err := s.releasePlanService.FindOngoingReleasePlans(ctx, &release_plan.FindOngoingReleasePlansRequest{
 		LatestMainBranchCommit: resp.HeadSHA,
 	})
 	if err != nil {
@@ -155,7 +145,7 @@ func (s *Repository) createOrUpdateReleasePlan(
 		return &ongoingReleasePlan, nil
 	}
 
-	newReleasePlan, err := s.releasePlanService.Create(ctx, &CreateReleasePlanRequest{
+	newReleasePlan, err := s.releasePlanService.Create(ctx, &release_plan.CreateReleasePlanRequest{
 		RepositoryID:           ent.ID,
 		LatestTagCommit:        *resp.LatestTag.Commit.SHA,
 		LatestMainBranchCommit: resp.HeadSHA,
@@ -164,4 +154,12 @@ func (s *Repository) createOrUpdateReleasePlan(
 		return nil, err
 	}
 	return newReleasePlan, nil
+}
+
+func (s *Repository) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
+	ents, err := s.repository.FindActive(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &ListResponse{Entites: ents}, nil
 }

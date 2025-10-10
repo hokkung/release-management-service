@@ -1,3 +1,7 @@
+// @title Release Management Service
+// @version v1.0.0
+// @schemes http https
+// @BasePath /
 package main
 
 import (
@@ -5,9 +9,12 @@ import (
 
 	"github.com/google/go-github/v75/github"
 	"github.com/hokkung/release-management-service/config"
+	_ "github.com/hokkung/release-management-service/docs"
 	repopostgres "github.com/hokkung/release-management-service/internal/repository/postgres"
 	"github.com/hokkung/release-management-service/internal/router"
-	"github.com/hokkung/release-management-service/internal/service"
+	"github.com/hokkung/release-management-service/internal/service/group_item"
+	"github.com/hokkung/release-management-service/internal/service/release_plan"
+	"github.com/hokkung/release-management-service/internal/service/repository"
 	"github.com/hokkung/release-management-service/pkg/githuby"
 	"github.com/hokkung/release-management-service/pkg/srv"
 )
@@ -25,17 +32,18 @@ func main() {
 	reporepo := repopostgres.NewRepository(db)
 
 	groupRepository := repopostgres.NewGroupItem(db)
-	groupItemService := service.NewGroupItem(groupRepository)
+	groupItemService := group_item.NewGroupItem(groupRepository)
 	releasePlanRepository := repopostgres.NewReleasePlan(db)
-	releasePlanService := service.NewReleasePlan(releasePlanRepository)
-	repoService := service.NewRepository(reporepo, githubService, groupItemService, releasePlanService)
+	releasePlanService := release_plan.NewReleasePlan(releasePlanRepository)
+	repoService := repository.NewRepository(reporepo, githubService, groupItemService, releasePlanService)
 	// err = repoService.Register(ctx, &service.RegisterRequest{
-	// 	Name: "go-groceries",
+	// 	Name:  "go-groceries",
+	// 	Owner: "hokkung",
 	// })
 	// if err != nil {
 	// 	panic(err)
 	// }
-	err = repoService.Sync(ctx, &service.SyncRequest{
+	err = repoService.Sync(ctx, &repository.SyncRequest{
 		RepositoryName: "go-groceries",
 	})
 	if err != nil {

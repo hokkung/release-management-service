@@ -1,0 +1,36 @@
+basePath: /
+definitions:
+  handler.RegisterRequest:
+    type: object
+  handler.RegisterResponse:
+    type: object
+info:
+  contact: {}
+  title: Release Management Service
+  version: v1.0.0
+paths:
+  /api/v1/repositories/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Register request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.RegisterResponse'
+      summary: Register repository API
+      tags:
+      - Repository
+schemes:
+- http
+- https
+swagger: "2.0"
