@@ -15,11 +15,15 @@ type RegisterRequest struct {
 
 type SyncCommitType string
 
-const NoParentSyncCommitType SyncCommitType = "NoParent"
+const (
+	NoParentSyncCommitType SyncCommitType = "NoParent"
+	ParentSyncCommitType   SyncCommitType = "Parent"
+	PullRequestCommitType   SyncCommitType = "PullRequestCommit"
+)
 
 type SyncRequest struct {
-	RepositoryName string
-	SyncCommitType SyncCommitType
+	RepositoryNames []string
+	SyncCommitType  SyncCommitType
 }
 
 type ListRequest struct {

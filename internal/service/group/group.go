@@ -37,7 +37,6 @@ func (s *Group) Create(ctx context.Context, req *CreateGroupRequest) (*domain.Gr
 	return &ent, nil
 }
 
-
 func (s *Group) UpdateStatus(ctx context.Context, req *UpdateStatusRequest) (*UpdateStatusResponse, error) {
 	ent, exist, err := s.repository.FindByKey(ctx, req.GroupID)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/hokkung/release-management-service/pkg/gorem"
 )
 
 type ReleasePlanStatus string
@@ -38,9 +39,8 @@ type ReleasePlanFilter struct {
 }
 
 type ReleasePlanRepository interface {
-	Create(ctx context.Context, ent *ReleasePlan) error
-	Save(ctx context.Context, ent *ReleasePlan) error
+	gorem.BaseRepositoryInt[ReleasePlan]
 	FindByLatestMainBranchCommitAndNotInStatus(ctx context.Context, latestMainBranchCommit string, statuses []string) ([]ReleasePlan, error)
 	FindByNotInStatus(ctx context.Context, statuses []string) ([]ReleasePlan, error)
-	FindByFilter(ctx context.Context, filter *ReleasePlanFilter) ([]ReleasePlan, error)
+	FindByReleasePlanFilter(ctx context.Context, filter *ReleasePlanFilter) ([]ReleasePlan, error)
 }

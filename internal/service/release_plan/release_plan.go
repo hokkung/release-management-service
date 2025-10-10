@@ -51,7 +51,7 @@ func (s *ReleasePlan) Update(ctx context.Context, ent *domain.ReleasePlan) error
 }
 
 func (s *ReleasePlan) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
-	ents, err := s.repository.FindByFilter(ctx, &domain.ReleasePlanFilter{
+	ents, err := s.repository.FindByReleasePlanFilter(ctx, &domain.ReleasePlanFilter{
 		RepositoryIDs: req.RepositoryIDs,
 	})
 	if err != nil {

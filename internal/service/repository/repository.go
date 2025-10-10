@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/hokkung/release-management-service/internal/domain"
@@ -71,51 +72,56 @@ func (s *Repository) Register(ctx context.Context, req *RegisterRequest) error {
 }
 
 func (s *Repository) Sync(ctx context.Context, req *SyncRequest) error {
-	ent, exist, err := s.repository.FindByName(ctx, req.RepositoryName)
-	if err != nil {
-		return err
-	}
-	if !exist {
-		return fmt.Errorf("not found repository name: %s", req.RepositoryName)
-	}
-	resp, err := s.githubService.HasUntaggedCommitOnMainBranch(ctx, &githuby.GetLatestCommitByBranchRequest{
-		BranchName:     ent.MainBranchName,
-		Owner:          ent.Owner,
-		RepositoryName: ent.Name,
-	})
-	if err != nil {
-		return err
-	}
-	if !resp.IsDiff {
-		fmt.Println("repository is up-to-date")
-		return nil
-	}
-	releasePlan, err := s.createOrUpdateReleasePlan(ctx, ent, resp)
-	if err != nil {
-		return err
-	}
+	for _, repositoryName := range req.RepositoryNames {
+		ent, exist, err := s.repository.FindByName(ctx, repositoryName)
+		if err != nil {
+			return err
+		}
+		if !exist {
+			return fmt.Errorf("not found repository name: %s", repositoryName)
+		}
+		resp, err := s.githubService.HasUntaggedCommitOnMainBranch(ctx, &githuby.GetLatestCommitByBranchRequest{
+			BranchName:     ent.MainBranchName,
+			Owner:          ent.Owner,
+			RepositoryName: ent.Name,
+		})
+		if err != nil {
+			return err
+		}
+		if !resp.IsDiff {
+			fmt.Println("repository is up-to-date")
+			return nil
+		}
+		releasePlan, err := s.createOrUpdateReleasePlan(ctx, ent, resp)
+		if err != nil {
+			return err
+		}
 
-	var commitsToBeCreated []*group_item.CreateGroupItemRequest
-	for _, commit := range resp.Commits {
-		// if merge strategy is "Create a merge commit"
-		// skipping merge request commit created by Github
-		if NoParentSyncCommitType == req.SyncCommitType && len(commit.Parents) > 1 {
+		var commitsToBeCreated []*group_item.CreateGroupItemRequest
+		for _, commit := range resp.Commits {
+			if req.SyncCommitType == PullRequestCommitType {
+				if !strings.Contains(*commit.Commit.Message, "pull request #") {
+					continue
+				}
+			}
+			commitsToBeCreated = append(commitsToBeCreated, &group_item.CreateGroupItemRequest{
+				CommitSHA:      *commit.SHA,
+				CommitAuthor:   *commit.Author.Login,
+				CommitMesssage: *commit.Commit.Message,
+				ReleasePlanID:  releasePlan.ID,
+			})
+		}
+		if len(commitsToBeCreated) == 0 {
 			continue
 		}
-		commitsToBeCreated = append(commitsToBeCreated, &group_item.CreateGroupItemRequest{
-			CommitSHA:      *commit.SHA,
-			CommitAuthor:   *commit.Commit.Author.Email,
-			CommitMesssage: *commit.Commit.Message,
-			ReleasePlanID:  releasePlan.ID,
+		_, err = s.groupItemService.CreatesIfNotExist(ctx, &group_item.CreateIfNotExistRequest{
+			Items: commitsToBeCreated,
 		})
-	}
-	_, err = s.groupItemService.CreatesIfNotExist(ctx, &group_item.CreateIfNotExistRequest{
-		Items: commitsToBeCreated,
-	})
-	ent.Status = string(domain.ActiveRepositoryStatus)
-	err = s.repository.Save(ctx, ent)
-	if err != nil {
-		return err
+		ent.Status = string(domain.ActiveRepositoryStatus)
+		err = s.repository.Save(ctx, ent)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -157,7 +163,7 @@ func (s *Repository) createOrUpdateReleasePlan(
 }
 
 func (s *Repository) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
-	ents, err := s.repository.FindActive(ctx)
+	ents, err := s.repository.FindAll(ctx)
 	if err != nil {
 		return nil, err
 	}

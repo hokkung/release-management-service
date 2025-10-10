@@ -28,7 +28,7 @@ func (r *ReleasePlan) FindByNotInStatus(ctx context.Context, statuses []string) 
 	return ents, err
 }
 
-func (r *ReleasePlan) FindByFilter(ctx context.Context, filter *domain.ReleasePlanFilter) ([]domain.ReleasePlan, error) {
+func (r *ReleasePlan) FindByReleasePlanFilter(ctx context.Context, filter *domain.ReleasePlanFilter) ([]domain.ReleasePlan, error) {
 	filters := make(map[string]any)
 	if len(filter.RepositoryIDs) > 0 {
 		filters["repository"] = filter.RepositoryIDs
