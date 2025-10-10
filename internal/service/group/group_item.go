@@ -1,4 +1,4 @@
-package group_item
+package group
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hokkung/release-management-service/internal/domain"
+	"github.com/hokkung/release-management-service/pkg/gorem"
 )
 
 type GroupItem struct {
@@ -20,7 +21,7 @@ func NewGroupItem(groupItemRepository domain.GroupItemRepository) *GroupItem {
 
 func (s *GroupItem) Create(ctx context.Context, req *CreateGroupItemRequest) (*domain.GroupItem, error) {
 	ent := &domain.GroupItem{
-		UIDModel: domain.UIDModel{
+		UIDModel: gorem.UIDModel{
 			ID: uuid.New(),
 		},
 		CommitSHA:      req.CommitSHA,
@@ -52,7 +53,7 @@ func (s *GroupItem) CreatesIfNotExist(ctx context.Context, req *CreateIfNotExist
 	var itemsToBeCreated []*domain.GroupItem
 	for _, s := range shaToRequest {
 		itemsToBeCreated = append(itemsToBeCreated, &domain.GroupItem{
-			UIDModel: domain.UIDModel{
+			UIDModel: gorem.UIDModel{
 				ID: uuid.New(),
 			},
 			CommitSHA:      s.CommitSHA,
@@ -79,7 +80,7 @@ func (s *GroupItem) Move(ctx context.Context, req *MoveRequest) error {
 	if !exist {
 		return fmt.Errorf("entity not found")
 	}
-	if req.FromGroupID.String() != ent.GroupID.String() {
+	if ent.GroupID != nil && ent.GroupID.String() == req.ToGroupID.String() {
 		return fmt.Errorf("group id is invalid")
 	}
 	ent.GroupID = &req.ToGroupID
@@ -103,4 +104,24 @@ func (s *GroupItem) UnassignByGroupID(ctx context.Context, groupID uuid.UUID) er
 		}
 	}
 	return nil
+}
+
+func (s *GroupItem) ListByGroupIDs(ctx context.Context, groupIDs []uuid.UUID) ([]domain.GroupItem, error) {
+	ents, err := s.groupItemRepository.FindByGroupItemFilter(ctx, &domain.GroupItemFilter{
+		GroupIDs: groupIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ents, nil
+}
+
+func (s *GroupItem) ListByReleasePlanIDs(ctx context.Context, releasePlanIDs []uuid.UUID) ([]domain.GroupItem, error) {
+	ents, err := s.groupItemRepository.FindByGroupItemFilter(ctx, &domain.GroupItemFilter{
+		ReleasePlanIDs: releasePlanIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ents, nil
 }

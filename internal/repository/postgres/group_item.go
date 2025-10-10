@@ -26,3 +26,14 @@ func (r *GroupItem) FindByCommitSHAs(ctx context.Context, shas []string) ([]doma
 func (r *GroupItem) FindByGroupID(ctx context.Context, groupID uuid.UUID) ([]domain.GroupItem, error) {
 	return gorm.G[domain.GroupItem](r.GetDB(ctx)).Where("group_id = ?", groupID.String()).Find(ctx)
 }
+
+func (r *GroupItem) FindByGroupItemFilter(ctx context.Context, filter *domain.GroupItemFilter) ([]domain.GroupItem, error) {
+	filters := make(map[string]any)
+	if len(filter.GroupIDs) > 0 {
+		filters["group_id"] = filter.GroupIDs
+	}
+	if len(filter.ReleasePlanIDs) > 0 {
+		filters["release_plan_id"] = filter.ReleasePlanIDs
+	}
+	return r.BaseRepository.FindByFilter(ctx, filters)
+}

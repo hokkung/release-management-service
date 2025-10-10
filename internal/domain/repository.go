@@ -15,7 +15,7 @@ const (
 )
 
 type Repository struct {
-	UIDModel
+	gorem.UIDModel
 
 	Owner          string
 	Name           string
@@ -25,18 +25,22 @@ type Repository struct {
 	LatestSyncAt   sql.NullTime
 }
 
-func (e *Repository) TableName() string {
+func (e Repository) TableName() string {
 	return "rms.repositories"
+}
+
+func (e Repository) PrimaryKey() string {
+	return "id"
 }
 
 func NewRepository() *Repository {
 	return &Repository{
-		UIDModel: UIDModel{
+		UIDModel: gorem.UIDModel{
 			ID: uuid.New(),
 		},
 	}
 }
 
 type RepositoryRepository interface {
-	gorem.BaseRepositoryInt[Repository]
+	gorem.Repository[Repository]
 }

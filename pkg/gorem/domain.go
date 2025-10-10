@@ -1,4 +1,4 @@
-package domain
+package gorem
 
 import (
 	"time"
@@ -6,6 +6,12 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
+
+type Entity interface {
+	TableName() string
+	PrimaryKey() string
+}
 
 type Model struct {
 	CreatedAt time.Time

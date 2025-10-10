@@ -1,14 +1,265 @@
 basePath: /
 definitions:
-  handler.RegisterRequest:
+  model.APIGroupDataResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model.Group'
     type: object
-  handler.RegisterResponse:
+  model.APIListReleasePlanResponse:
+    properties:
+      data:
+        $ref: '#/definitions/model.ListReleasePlanResponse'
+    type: object
+  model.APIResponse:
+    type: object
+  model.CreateGroupRequest:
+    properties:
+      name:
+        type: string
+      releasePlanId:
+        type: string
+      repositoryId:
+        type: string
+    type: object
+  model.Group:
+    properties:
+      groupItems:
+        items:
+          $ref: '#/definitions/model.GroupItem'
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+    type: object
+  model.GroupItem:
+    properties:
+      author:
+        type: string
+      commitMessage:
+        type: string
+      commitSHA:
+        type: string
+      id:
+        type: string
+    type: object
+  model.ListReleasePlanRequest:
+    properties:
+      pagination:
+        $ref: '#/definitions/model.Pagination'
+      repositoryIds:
+        items:
+          type: string
+        type: array
+    type: object
+  model.ListReleasePlanResponse:
+    properties:
+      releasePlans:
+        items:
+          $ref: '#/definitions/model.ReleasePlan'
+        type: array
+    type: object
+  model.MoveRequest:
+    properties:
+      toGroupId:
+        type: string
+    type: object
+  model.Pagination:
+    properties:
+      page:
+        type: integer
+      perPage:
+        type: integer
+    type: object
+  model.RegisterRepositoryRequest:
+    properties:
+      repositoryNames:
+        items:
+          type: string
+        type: array
+    type: object
+  model.ReleasePlan:
+    properties:
+      groups:
+        items:
+          $ref: '#/definitions/model.Group'
+        type: array
+      id:
+        type: string
+      latestMainBranchCommmit:
+        type: string
+      latestTag:
+        type: string
+      note:
+        type: string
+      repositoryId:
+        type: string
+      targetDeployDate:
+        type: string
+      unGroupItems:
+        items:
+          $ref: '#/definitions/model.GroupItem'
+        type: array
+    type: object
+  model.SyncRepositoryRequest:
+    properties:
+      repositoriesNames:
+        items:
+          type: string
+        type: array
+    type: object
+  model.UpdateGroupStatusRequest:
+    properties:
+      status:
+        type: string
+    type: object
+  model.UpdateReleasePlanRequest:
+    properties:
+      note:
+        type: string
+      targetDeployDate:
+        type: string
     type: object
 info:
   contact: {}
   title: Release Management Service
   version: v1.0.0
 paths:
+  /api/v1/group-items/{group_item_id}/move:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Move item request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.MoveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      summary: Move group item API
+      tags:
+      - GroupItem
+  /api/v1/groups:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Group request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.APIGroupDataResponse'
+      summary: Create group API
+      tags:
+      - Group
+  /api/v1/groups/{group_id}:
+    delete:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      summary: Rmove group API
+      tags:
+      - Group
+  /api/v1/groups/{group_id}/update-status:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: UpdateGroupStatus request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateGroupStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.APIGroupDataResponse'
+      summary: Update group status API
+      tags:
+      - Group
+  /api/v1/release-plans:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Release plan request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.ListReleasePlanRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.APIListReleasePlanResponse'
+      summary: List release plan API
+      tags:
+      - ReleasePlan
+  /api/v1/release-plans/{release_plan_id}/update:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Release plan request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateReleasePlanRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      summary: Update release plan API
+      tags:
+      - ReleasePlan
+  /api/v1/repositories:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      summary: List repository API
+      tags:
+      - Repository
   /api/v1/repositories/register:
     post:
       consumes:
@@ -19,15 +270,36 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.RegisterRequest'
+          $ref: '#/definitions/model.RegisterRepositoryRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.RegisterResponse'
+            $ref: '#/definitions/model.APIResponse'
       summary: Register repository API
+      tags:
+      - Repository
+  /api/v1/repositories/sync:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Sybc request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.SyncRepositoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      summary: Sync repository API
       tags:
       - Repository
 schemes:

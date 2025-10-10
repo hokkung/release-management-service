@@ -7,9 +7,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hokkung/release-management-service/internal/domain"
-	"github.com/hokkung/release-management-service/internal/service/group_item"
+	"github.com/hokkung/release-management-service/internal/service/group"
 	"github.com/hokkung/release-management-service/internal/service/release_plan"
 	"github.com/hokkung/release-management-service/pkg/githuby"
+	"github.com/hokkung/release-management-service/pkg/gorem"
 )
 
 type Repository struct {
@@ -35,7 +36,7 @@ func NewRepository(
 
 func (s *Repository) Create(ctx context.Context, req *CreateRequest) error {
 	ent := &domain.Repository{
-		UIDModel: domain.UIDModel{
+		UIDModel: gorem.UIDModel{
 			ID: uuid.New(),
 		},
 		Name:           req.Name,
@@ -97,14 +98,14 @@ func (s *Repository) Sync(ctx context.Context, req *SyncRequest) error {
 			return err
 		}
 
-		var commitsToBeCreated []*group_item.CreateGroupItemRequest
+		var commitsToBeCreated []*group.CreateGroupItemRequest
 		for _, commit := range resp.Commits {
 			if req.SyncCommitType == PullRequestCommitType {
 				if !strings.Contains(*commit.Commit.Message, "pull request #") {
 					continue
 				}
 			}
-			commitsToBeCreated = append(commitsToBeCreated, &group_item.CreateGroupItemRequest{
+			commitsToBeCreated = append(commitsToBeCreated, &group.CreateGroupItemRequest{
 				CommitSHA:      *commit.SHA,
 				CommitAuthor:   *commit.Author.Login,
 				CommitMesssage: *commit.Commit.Message,
@@ -114,7 +115,7 @@ func (s *Repository) Sync(ctx context.Context, req *SyncRequest) error {
 		if len(commitsToBeCreated) == 0 {
 			continue
 		}
-		_, err = s.groupItemService.CreatesIfNotExist(ctx, &group_item.CreateIfNotExistRequest{
+		_, err = s.groupItemService.CreatesIfNotExist(ctx, &group.CreateIfNotExistRequest{
 			Items: commitsToBeCreated,
 		})
 		ent.Status = string(domain.ActiveRepositoryStatus)

@@ -1,20 +1,11 @@
 package handler
 
 import (
-	"context"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/hokkung/release-management-service/config"
 	"github.com/hokkung/release-management-service/internal/delivery/rest/model"
 	"github.com/hokkung/release-management-service/internal/service/repository"
 )
-
-type RepositoryService interface {
-	Create(ctx context.Context, req *repository.CreateRequest) error
-	Register(ctx context.Context, req *repository.RegisterRequest) error
-	Sync(ctx context.Context, req *repository.SyncRequest) error
-	List(ctx context.Context, req *repository.ListRequest) (*repository.ListResponse, error)
-}
 
 type Repository struct {
 	service RepositoryService
@@ -32,8 +23,8 @@ func NewRepository(service RepositoryService, cfg config.Configuration) *Reposit
 // @Tags Repository
 // @Accept json
 // @Produce json
-// @Param request body RegisterRequest true "Register request"
-// @Success 200 {object} RegisterResponse
+// @Param request body model.RegisterRepositoryRequest true "Register request"
+// @Success 200 {object} model.APIResponse
 // @Router /api/v1/repositories/register [post]
 func (h *Repository) Register(c *fiber.Ctx) error {
 	var req model.RegisterRepositoryRequest
@@ -51,6 +42,12 @@ func (h *Repository) Register(c *fiber.Ctx) error {
 	return c.JSON(model.APIResponse{})
 }
 
+// @Summary List repository API
+// @Tags Repository
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.APIResponse
+// @Router /api/v1/repositories [get]
 func (h *Repository) List(c *fiber.Ctx) error {
 	resp, err := h.service.List(c.UserContext(), &repository.ListRequest{})
 	if err != nil {
@@ -74,6 +71,13 @@ func (h *Repository) List(c *fiber.Ctx) error {
 	})
 }
 
+// @Summary Sync repository API
+// @Tags Repository
+// @Accept json
+// @Produce json
+// @Param request body model.SyncRepositoryRequest true "Sybc request"
+// @Success 200 {object} model.APIResponse
+// @Router /api/v1/repositories/sync [post]
 func (h *Repository) Sync(c *fiber.Ctx) error {
 	var req model.SyncRepositoryRequest
 	if err := c.BodyParser(&req); err != nil {
