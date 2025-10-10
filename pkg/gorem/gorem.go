@@ -46,6 +46,12 @@ func (r *BaseRepository[T]) GetDB(ctx context.Context) *gorm.DB {
 	return tx
 }
 
+func (r *BaseRepository[T]) FindAll(ctx context.Context) ([]T, error) {
+	var ents []T
+	err := r.GetDB(ctx).Find(&ents).Error
+	return ents, err
+}
+
 func (r *BaseRepository[T]) FindByKey(ctx context.Context, key interface{}) (*T, bool, error) {
 	ent, err := gorm.G[T](r.db).Where("id = ?", key).First(ctx)
 	if err != nil {

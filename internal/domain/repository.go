@@ -1,10 +1,10 @@
 package domain
 
 import (
-	"context"
 	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/hokkung/release-management-service/pkg/gorem"
 )
 
 type RepositoryStatus string
@@ -38,9 +38,5 @@ func NewRepository() *Repository {
 }
 
 type RepositoryRepository interface {
-	Create(ctx context.Context, ent *Repository) error
-	FindByKey(ctx context.Context, key interface{}) (*Repository, bool, error)
-	FindByName(ctx context.Context, name string) (*Repository, bool, error)
-	FindActive(ctx context.Context) ([]Repository, error)
-	Save(ctx context.Context, ent *Repository) error
+	gorem.BaseRepositoryInt[Repository]
 }

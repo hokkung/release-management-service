@@ -5,11 +5,10 @@
 package main
 
 import (
-	"context"
-
 	"github.com/google/go-github/v75/github"
 	"github.com/hokkung/release-management-service/config"
 	_ "github.com/hokkung/release-management-service/docs"
+	"github.com/hokkung/release-management-service/internal/delivery/rest/handler"
 	repopostgres "github.com/hokkung/release-management-service/internal/repository/postgres"
 	"github.com/hokkung/release-management-service/internal/router"
 	"github.com/hokkung/release-management-service/internal/service/group_item"
@@ -21,13 +20,13 @@ import (
 
 func main() {
 	cfg := config.New()
-	ctx := context.Background()
+	// ctx := context.Background()
 	db, err := repopostgres.New(*cfg)
 	if err != nil {
 		panic(err)
 	}
 
-	githubClient := github.NewClient(nil).WithAuthToken("")
+	githubClient := github.NewClient(nil).WithAuthToken(cfg.GitHub.Token)
 	githubService := githuby.New(githubClient)
 	reporepo := repopostgres.NewRepository(db)
 
@@ -36,21 +35,9 @@ func main() {
 	releasePlanRepository := repopostgres.NewReleasePlan(db)
 	releasePlanService := release_plan.NewReleasePlan(releasePlanRepository)
 	repoService := repository.NewRepository(reporepo, githubService, groupItemService, releasePlanService)
-	// err = repoService.Register(ctx, &service.RegisterRequest{
-	// 	Name:  "go-groceries",
-	// 	Owner: "hokkung",
-	// })
-	// if err != nil {
-	// 	panic(err)
-	// }
-	err = repoService.Sync(ctx, &repository.SyncRequest{
-		RepositoryName: "go-groceries",
-	})
-	if err != nil {
-		panic(err)
-	}
 
-	customizer := router.NewCustomizer(*cfg)
+	repositoryHandler := handler.NewRepository(repoService, *cfg)
+	customizer := router.NewCustomizer(*cfg, repositoryHandler)
 	server := srv.New(customizer)
 	err = server.Start()
 	if err != nil {

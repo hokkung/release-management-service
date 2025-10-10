@@ -3,6 +3,7 @@ package config
 import "github.com/caarlos0/env/v11"
 
 type Configuration struct {
+	GitHub GitHubConfig `envPrefix:"GITHUB_" envSeparator:"_" required:"true"`  
 	DB DBConfig `envPrefix:"DB_" envSeparator:"_" required:"true"`
 }
 

@@ -5,6 +5,7 @@ import "context"
 type BaseRepositoryInt[T any] interface {
 	Create(ctx context.Context, ent *T) error
 	Creates(ctx context.Context, ents []*T) error
+	FindAll(ctx context.Context) ([]T, error)
 	FindByKey(ctx context.Context, key interface{}) (*T, bool, error)
 	FindByName(ctx context.Context, name string) (*T, bool, error)
 	FindByFilter(ctx context.Context, filters map[string]any) ([]T, error)
