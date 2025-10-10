@@ -20,9 +20,7 @@ var (
 type ReleasePlan struct {
 	UIDModel
 
-	fromCommit             string
-	toCommit               string
-	targetDeployDate       sql.NullTime
+	TargetDeployDate       sql.NullTime
 	Note                   sql.NullString
 	LatestTagCommit        string
 	LatestMainBranchCommit string

@@ -5,15 +5,18 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hokkung/release-management-service/internal/domain"
+	"github.com/hokkung/release-management-service/internal/service/group"
 )
 
 type ReleasePlan struct {
-	repository domain.ReleasePlanRepository
+	repository   domain.ReleasePlanRepository
+	groupService GroupService
 }
 
-func NewReleasePlan(repository domain.ReleasePlanRepository) *ReleasePlan {
+func NewReleasePlan(repository domain.ReleasePlanRepository, groupService GroupService) *ReleasePlan {
 	return &ReleasePlan{
-		repository: repository,
+		repository:   repository,
+		groupService: groupService,
 	}
 }
 
@@ -59,5 +62,52 @@ func (s *ReleasePlan) List(ctx context.Context, req *ListRequest) (*ListResponse
 	}
 	return &ListResponse{
 		Entities: ents,
+	}, nil
+}
+
+func (s *ReleasePlan) ListSummary(ctx context.Context, req *ListRequest) (*ListResponse, error) {
+	ents, err := s.repository.FindByReleasePlanFilter(ctx, &domain.ReleasePlanFilter{
+		RepositoryIDs: req.RepositoryIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	releasePlanDtos := make([]*ReleasePlanDto, 0, len(ents))
+	releaseIDs := make([]uuid.UUID, 0, len(ents))
+	for _, ent := range ents {
+		releaseIDs = append(releaseIDs, ent.ID)
+		releasePlanDtos = append(releasePlanDtos, &ReleasePlanDto{
+			ID:                     ent.ID,
+			TargetDeployDate:       &ent.TargetDeployDate.Time,
+			Note:                   &ent.Note.String,
+			LatestTagCommit:        ent.LatestTagCommit,
+			LatestMainBranchCommit: ent.LatestMainBranchCommit,
+			RepositoryID:           ent.RepositoryID,
+			Status:                 ent.Status,
+		})
+	}
+	groupsResp, err := s.groupService.List(ctx, &group.ListRequest{
+		ReleasePlanIDs: releaseIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	releasePlanIDToGroups := make(map[uuid.UUID][]group.GroupDto)
+	for _, g := range groupsResp.Entities {
+		groups, ok := releasePlanIDToGroups[g.ReleasePlanID]
+		if ok {
+			groups = append(groups, *g)
+			releasePlanIDToGroups[g.ReleasePlanID] = groups
+		} else {
+			releasePlanIDToGroups[g.ReleasePlanID] = []group.GroupDto{}
+		}
+	}
+	for _, releasePlanDto := range releasePlanDtos {
+		if groups, ok := releasePlanIDToGroups[releasePlanDto.ID]; ok {
+			releasePlanDto.Groups = groups
+		}
+	}
+	return &ListResponse{
+		Entities: releasePlanDtos,
 	}, nil
 }

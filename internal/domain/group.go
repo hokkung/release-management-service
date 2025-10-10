@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"github.com/hokkung/release-management-service/pkg/gorem"
 )
@@ -52,12 +54,18 @@ type Group struct {
 	Status        string
 	RepositoryID  uuid.UUID
 	ReleasePlanID uuid.UUID
+	GroupItems    []GroupItem `gorm:"-"`
 }
 
 func (e *Group) TableName() string {
 	return "rms.groups"
 }
 
+type GroupFilter struct {
+	ReleasePlanIDs []uuid.UUID
+}
+
 type GroupRepository interface {
 	gorem.BaseRepositoryInt[Group]
+	FindByGroupFilter(ctx context.Context, filter *GroupFilter) ([]Group, error)
 }

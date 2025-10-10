@@ -21,8 +21,13 @@ func (e *GroupItem) TableName() string {
 	return "rms.group_items"
 }
 
+type GroupItemFilter struct {
+	GroupIDs []uuid.UUID
+}
+
 type GroupItemRepository interface {
 	gorem.BaseRepositoryInt[GroupItem]
 	FindByCommitSHAs(ctx context.Context, shas []string) ([]GroupItem, error)
 	FindByGroupID(ctx context.Context, groupID uuid.UUID) ([]GroupItem, error)
+	FindByGroupItemFilter(ctx context.Context, filter *GroupItemFilter) ([]GroupItem, error)
 }

@@ -19,3 +19,20 @@ type UpdateStatusRequest struct {
 type UpdateStatusResponse struct {
 	Entity *domain.Group
 }
+
+type ListRequest struct {
+	ReleasePlanIDs []uuid.UUID
+}
+
+type ListResponse struct {
+	Entities []*GroupDto
+}
+
+type GroupDto struct {
+	ID            uuid.UUID
+	Name          string
+	Status        string
+	RepositoryID  uuid.UUID
+	ReleasePlanID uuid.UUID
+	GroupItems    []domain.GroupItem
+}

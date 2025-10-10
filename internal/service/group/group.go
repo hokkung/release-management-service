@@ -70,3 +70,46 @@ func (s *Group) Remove(ctx context.Context, groupID uuid.UUID) error {
 	}
 	return nil
 }
+
+func (s *Group) List(ctx context.Context, req *ListRequest) (*ListResponse, error) {
+	groups, err := s.repository.FindByGroupFilter(ctx, &domain.GroupFilter{
+		ReleasePlanIDs: req.ReleasePlanIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	groupDtos := make([]*GroupDto, 0, len(groups))
+	groupIDs := make([]uuid.UUID, 0, len(groups))
+	for _, group := range groups {
+		groupIDs = append(groupIDs, group.ID)
+		groupDtos = append(groupDtos, &GroupDto{
+			ID:            group.ID,
+			Name:          group.Name,
+			Status:        group.Status,
+			RepositoryID:  group.RepositoryID,
+			ReleasePlanID: group.ReleasePlanID,
+		})
+	}
+	items, err := s.groupItemService.ListByGroupIDs(ctx, groupIDs)
+	if err != nil {
+		return nil, err
+	}
+	groupIdToItems := make(map[uuid.UUID][]domain.GroupItem)
+	for _, item := range items {
+		items, ok := groupIdToItems[*item.GroupID]
+		if ok {
+			items = append(items, item)
+			groupIdToItems[*item.GroupID] = items
+		} else {
+			groupIdToItems[*item.GroupID] = []domain.GroupItem{}
+		}
+	}
+	for _, groupDto := range groupDtos {
+		if items, ok := groupIdToItems[groupDto.ID]; ok {
+			groupDto.GroupItems = items
+		}
+	}
+	return &ListResponse{
+		Entities: groupDtos,
+	}, nil
+}

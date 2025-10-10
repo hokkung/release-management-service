@@ -1,8 +1,11 @@
 package release_plan
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/hokkung/release-management-service/internal/domain"
+	"github.com/hokkung/release-management-service/internal/service/group"
 )
 
 type CreateReleasePlanRequest struct {
@@ -24,5 +27,16 @@ type ListRequest struct {
 }
 
 type ListResponse struct {
-	Entities []domain.ReleasePlan
+	Entities []ReleasePlanDto
+}
+
+type ReleasePlanDto struct {
+	ID                     uuid.UUID
+	TargetDeployDate       *time.Time
+	Note                   *string
+	LatestTagCommit        string
+	LatestMainBranchCommit string
+	RepositoryID           uuid.UUID
+	Status                 string
+	Groups                 []group.GroupDto
 }

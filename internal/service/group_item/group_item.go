@@ -104,3 +104,13 @@ func (s *GroupItem) UnassignByGroupID(ctx context.Context, groupID uuid.UUID) er
 	}
 	return nil
 }
+
+func (s *GroupItem) ListByGroupIDs(ctx context.Context, groupIDs []uuid.UUID) ([]domain.GroupItem, error) {
+	ents, err := s.groupItemRepository.FindByGroupItemFilter(ctx, &domain.GroupItemFilter{
+		GroupIDs: groupIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ents, nil
+}
