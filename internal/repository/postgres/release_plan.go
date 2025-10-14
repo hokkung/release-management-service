@@ -31,7 +31,7 @@ func (r *ReleasePlan) FindByNotInStatus(ctx context.Context, statuses []string) 
 func (r *ReleasePlan) FindByReleasePlanFilter(ctx context.Context, filter *domain.ReleasePlanFilter) ([]domain.ReleasePlan, error) {
 	filters := make(map[string]any)
 	if len(filter.RepositoryIDs) > 0 {
-		filters["repository"] = filter.RepositoryIDs
+		filters["repository_id"] = filter.RepositoryIDs
 	}
 	return r.BaseRepository.FindByFilter(ctx, filters)
 }

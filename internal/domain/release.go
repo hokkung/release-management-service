@@ -11,18 +11,16 @@ import (
 type ReleasePlanStatus string
 
 var (
-	WaitingToDeployReleasePlanStatus ReleasePlanStatus = "WAITING_TO_DEPLOY"
 	TestingReleasePlanStatus         ReleasePlanStatus = "TESTING"
 	FailReleasePlanStatus            ReleasePlanStatus = "FAIL"
 	UatReleasePlanStatus             ReleasePlanStatus = "UAT"
+	WaitingToDeployReleasePlanStatus ReleasePlanStatus = "WAITING_TO_DEPLOY"
 )
 
 type ReleasePlan struct {
-	UIDModel
+	gorem.UIDModel
 
-	fromCommit             string
-	toCommit               string
-	targetDeployDate       sql.NullTime
+	TargetDeployDate       sql.NullTime
 	Note                   sql.NullString
 	LatestTagCommit        string
 	LatestMainBranchCommit string
@@ -30,8 +28,12 @@ type ReleasePlan struct {
 	Status                 string
 }
 
-func (e *ReleasePlan) TableName() string {
+func (e ReleasePlan) TableName() string {
 	return "rms.release_plans"
+}
+
+func (e ReleasePlan) PrimaryKey() string {
+	return "id"
 }
 
 type ReleasePlanFilter struct {
@@ -39,7 +41,7 @@ type ReleasePlanFilter struct {
 }
 
 type ReleasePlanRepository interface {
-	gorem.BaseRepositoryInt[ReleasePlan]
+	gorem.Repository[ReleasePlan]
 	FindByLatestMainBranchCommitAndNotInStatus(ctx context.Context, latestMainBranchCommit string, statuses []string) ([]ReleasePlan, error)
 	FindByNotInStatus(ctx context.Context, statuses []string) ([]ReleasePlan, error)
 	FindByReleasePlanFilter(ctx context.Context, filter *ReleasePlanFilter) ([]ReleasePlan, error)

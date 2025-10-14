@@ -15,6 +15,215 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/v1/group-items/{group_item_id}/move": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "GroupItem"
+                ],
+                "summary": "Move group item API",
+                "parameters": [
+                    {
+                        "description": "Move item request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.MoveRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Group"
+                ],
+                "summary": "Create group API",
+                "parameters": [
+                    {
+                        "description": "Group request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.CreateGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.APIGroupDataResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/{group_id}": {
+            "delete": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Group"
+                ],
+                "summary": "Rmove group API",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/groups/{group_id}/update-status": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Group"
+                ],
+                "summary": "Update group status API",
+                "parameters": [
+                    {
+                        "description": "UpdateGroupStatus request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.UpdateGroupStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.APIGroupDataResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/release-plans": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ReleasePlan"
+                ],
+                "summary": "List release plan API",
+                "parameters": [
+                    {
+                        "description": "Release plan request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.ListReleasePlanRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.APIListReleasePlanResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/release-plans/{release_plan_id}/update": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ReleasePlan"
+                ],
+                "summary": "Update release plan API",
+                "parameters": [
+                    {
+                        "description": "Release plan request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.UpdateReleasePlanRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/repositories": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Repository"
+                ],
+                "summary": "List repository API",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/repositories/register": {
             "post": {
                 "consumes": [
@@ -34,7 +243,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.RegisterRequest"
+                            "$ref": "#/definitions/model.RegisterRepositoryRequest"
                         }
                     }
                 ],
@@ -42,7 +251,40 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.RegisterResponse"
+                            "$ref": "#/definitions/model.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/repositories/sync": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Repository"
+                ],
+                "summary": "Sync repository API",
+                "parameters": [
+                    {
+                        "description": "Sybc request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SyncRepositoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.APIResponse"
                         }
                     }
                 }
@@ -50,11 +292,195 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.RegisterRequest": {
+        "model.APIGroupDataResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/model.Group"
+                }
+            }
+        },
+        "model.APIListReleasePlanResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/model.ListReleasePlanResponse"
+                }
+            }
+        },
+        "model.APIResponse": {
             "type": "object"
         },
-        "handler.RegisterResponse": {
-            "type": "object"
+        "model.CreateGroupRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "releasePlanId": {
+                    "type": "string"
+                },
+                "repositoryId": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Group": {
+            "type": "object",
+            "properties": {
+                "groupItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.GroupItem"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.GroupItem": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "type": "string"
+                },
+                "commitMessage": {
+                    "type": "string"
+                },
+                "commitSHA": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.ListReleasePlanRequest": {
+            "type": "object",
+            "properties": {
+                "pagination": {
+                    "$ref": "#/definitions/model.Pagination"
+                },
+                "repositoryIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "model.ListReleasePlanResponse": {
+            "type": "object",
+            "properties": {
+                "releasePlans": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.ReleasePlan"
+                    }
+                }
+            }
+        },
+        "model.MoveRequest": {
+            "type": "object",
+            "properties": {
+                "toGroupId": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Pagination": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "type": "integer"
+                },
+                "perPage": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.RegisterRepositoryRequest": {
+            "type": "object",
+            "properties": {
+                "repositoryNames": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "model.ReleasePlan": {
+            "type": "object",
+            "properties": {
+                "groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.Group"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "latestMainBranchCommmit": {
+                    "type": "string"
+                },
+                "latestTag": {
+                    "type": "string"
+                },
+                "note": {
+                    "type": "string"
+                },
+                "repositoryId": {
+                    "type": "string"
+                },
+                "targetDeployDate": {
+                    "type": "string"
+                },
+                "unGroupItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.GroupItem"
+                    }
+                }
+            }
+        },
+        "model.SyncRepositoryRequest": {
+            "type": "object",
+            "properties": {
+                "repositoriesNames": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "model.UpdateGroupStatusRequest": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.UpdateReleasePlanRequest": {
+            "type": "object",
+            "properties": {
+                "note": {
+                    "type": "string"
+                },
+                "targetDeployDate": {
+                    "type": "string"
+                }
+            }
         }
     }
 }`

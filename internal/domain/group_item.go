@@ -8,7 +8,7 @@ import (
 )
 
 type GroupItem struct {
-	UIDModel
+	gorem.UIDModel
 
 	CommitSHA      string
 	CommitAuthor   string
@@ -17,12 +17,22 @@ type GroupItem struct {
 	ReleasePlanID  uuid.UUID
 }
 
-func (e *GroupItem) TableName() string {
+func (e GroupItem) TableName() string {
 	return "rms.group_items"
 }
 
+func (e GroupItem) PrimaryKey() string {
+	return "id"
+}
+
+type GroupItemFilter struct {
+	GroupIDs       []uuid.UUID
+	ReleasePlanIDs []uuid.UUID
+}
+
 type GroupItemRepository interface {
-	gorem.BaseRepositoryInt[GroupItem]
+	gorem.Repository[GroupItem]
 	FindByCommitSHAs(ctx context.Context, shas []string) ([]GroupItem, error)
 	FindByGroupID(ctx context.Context, groupID uuid.UUID) ([]GroupItem, error)
+	FindByGroupItemFilter(ctx context.Context, filter *GroupItemFilter) ([]GroupItem, error)
 }

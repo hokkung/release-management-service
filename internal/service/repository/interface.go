@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hokkung/release-management-service/internal/domain"
-	"github.com/hokkung/release-management-service/internal/service/group_item"
+	"github.com/hokkung/release-management-service/internal/service/group"
 	"github.com/hokkung/release-management-service/internal/service/release_plan"
 	"github.com/hokkung/release-management-service/pkg/githuby"
 )
@@ -22,8 +22,8 @@ type GitHubService interface {
 }
 
 type GroupItemService interface {
-	Create(ctx context.Context, req *group_item.CreateGroupItemRequest) (*domain.GroupItem, error)
+	Create(ctx context.Context, req *group.CreateGroupItemRequest) (*domain.GroupItem, error)
 	Creates(ctx context.Context, ents []*domain.GroupItem) error
-	CreatesIfNotExist(ctx context.Context, req *group_item.CreateIfNotExistRequest) ([]*domain.GroupItem, error)
+	CreatesIfNotExist(ctx context.Context, req *group.CreateIfNotExistRequest) ([]*domain.GroupItem, error)
 	UnassignByGroupID(ctx context.Context, groupID uuid.UUID) error
 }
