@@ -5,6 +5,11 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"os/signal"
+	"syscall"
+
 	"github.com/google/go-github/v75/github"
 	"github.com/hokkung/release-management-service/config"
 	_ "github.com/hokkung/release-management-service/docs"
@@ -19,8 +24,14 @@ import (
 )
 
 func main() {
+	defer func() {
+		fmt.Println("gracefully shutdown server")
+	}()
+
+	ctx, stopFunc := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stopFunc()
+
 	cfg := config.New()
-	// ctx := context.Background()
 	db, err := repopostgres.New(*cfg)
 	if err != nil {
 		panic(err)
@@ -29,18 +40,29 @@ func main() {
 	githubClient := github.NewClient(nil).WithAuthToken(cfg.GitHub.Token)
 	githubService := githuby.New(githubClient)
 	reporepo := repopostgres.NewRepository(db)
-
 	groupRepository := repopostgres.NewGroupItem(db)
 	groupItemService := group_item.NewGroupItem(groupRepository)
 	releasePlanRepository := repopostgres.NewReleasePlan(db)
 	releasePlanService := release_plan.NewReleasePlan(releasePlanRepository)
 	repoService := repository.NewRepository(reporepo, githubService, groupItemService, releasePlanService)
-
 	repositoryHandler := handler.NewRepository(repoService, *cfg)
 	customizer := router.NewCustomizer(*cfg, repositoryHandler)
 	server := srv.New(customizer)
-	err = server.Start()
-	if err != nil {
-		panic(err)
+
+	srvChanErr := make(chan error, 1)
+	go func() {
+		if err := server.Start(); err != nil {
+			srvChanErr <- err
+		}
+	}()
+
+	select {
+	case srvErr := <-srvChanErr:
+		panic(fmt.Errorf("unable to start server: %w", srvErr))
+	case <-ctx.Done():
+		// do nothing
+	}
+	if err = server.Stop(); err != nil {
+		panic(fmt.Errorf("unable to stop server: %w", err))
 	}
 }
