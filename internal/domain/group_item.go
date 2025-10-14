@@ -18,7 +18,7 @@ type GroupItem struct {
 }
 
 func (e GroupItem) TableName() string {
-	return "rms.group_items"
+	return "group_items"
 }
 
 func (e GroupItem) PrimaryKey() string {

@@ -5,6 +5,11 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"os/signal"
+	"syscall"
+
 	"github.com/google/go-github/v75/github"
 	"github.com/hokkung/release-management-service/config"
 	_ "github.com/hokkung/release-management-service/docs"
@@ -19,7 +24,15 @@ import (
 )
 
 func main() {
+	defer func() {
+		fmt.Println("gracefully shutdown server")
+	}()
+
+	ctx, stopFunc := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stopFunc()
+
 	cfg := config.New()
+	// db, err := reposqlite.New(*cfg)
 	db, err := repopostgres.New(*cfg)
 	if err != nil {
 		panic(err)
@@ -43,8 +56,21 @@ func main() {
 	groupHander := handler.NewGroup(groupService, releasePlanService)
 	customizer := router.NewCustomizer(*cfg, repositoryHandler, releasePlanHandler, groupItemHandler, groupHander)
 	server := srv.New(customizer)
-	err = server.Start()
-	if err != nil {
-		panic(err)
+
+	srvChanErr := make(chan error, 1)
+	go func() {
+		if err := server.Start(); err != nil {
+			srvChanErr <- err
+		}
+	}()
+
+	select {
+	case srvErr := <-srvChanErr:
+		panic(fmt.Errorf("unable to start server: %w", srvErr))
+	case <-ctx.Done():
+		// do nothing
+	}
+	if err = server.Stop(); err != nil {
+		panic(fmt.Errorf("unable to stop server: %w", err))
 	}
 }
