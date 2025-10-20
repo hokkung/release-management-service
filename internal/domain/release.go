@@ -29,7 +29,7 @@ type ReleasePlan struct {
 }
 
 func (e ReleasePlan) TableName() string {
-	return "rms.release_plans"
+	return "release_plans"
 }
 
 func (e ReleasePlan) PrimaryKey() string {

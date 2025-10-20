@@ -58,7 +58,7 @@ type Group struct {
 }
 
 func (e Group) TableName() string {
-	return "rms.groups"
+	return "groups"
 }
 
 func (e Group) PrimaryKey() string {

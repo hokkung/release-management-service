@@ -26,7 +26,7 @@ type Repository struct {
 }
 
 func (e Repository) TableName() string {
-	return "rms.repositories"
+	return "repositories"
 }
 
 func (e Repository) PrimaryKey() string {
